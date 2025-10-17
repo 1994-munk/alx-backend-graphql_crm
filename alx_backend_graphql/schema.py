@@ -1,4 +1,5 @@
 # schema.py
+from crm.schema import Query as CRMQuery  # ✅ import Query from crm
 import graphene  # Graphene is the library that handles GraphQL in Django
 from graphene_django import DjangoObjectType
 from crm.models import Customer, Product, Order
@@ -10,13 +11,20 @@ class Query(graphene.ObjectType):
     # Create a field named 'hello' that returns a String
     hello = graphene.String()
 
+# Combine all queries from crm and other apps here
+class Query(CRMQuery, graphene.ObjectType):
+    pass
+
+class Mutation(graphene.ObjectType):
+    pass
+
     # Define what happens when someone queries the 'hello' field
     def resolve_hello(root, info):
         # This function is called whenever someone requests { hello }
         return "Hello, GraphQL!"
 
 # 🔗 Combine all queries into a schema
-schema = graphene.Schema(query=Query)
+schema = graphene.Schema(query=Query ,mutation=Mutation)
 
 # 🧱 GraphQL Object Types
 class CustomerType(DjangoObjectType):
