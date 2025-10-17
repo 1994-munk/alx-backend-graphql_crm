@@ -1,7 +1,7 @@
 # schema.py
 import graphene  # Graphene is the library that handles GraphQL in Django
 from graphene_django import DjangoObjectType
-from .models import Customer, Product, Order
+from crm.models import Customer, Product, Order
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -51,38 +51,46 @@ class CreateCustomer(graphene.Mutation):
         customer = Customer.objects.create(name=name, email=email, phone=phone)
         return CreateCustomer(customer=customer, message="Customer created successfully!")
 
+# ✅ Define input type properly
+class CustomerInput(graphene.InputObjectType):
+    name = graphene.String(required=True)
+    email = graphene.String(required=True)
+    phone = graphene.String()
 
-# 👩‍💻 Bulk Create Customers Mutation
+# ✅ Define mutation using the class name, not instance
 class BulkCreateCustomers(graphene.Mutation):
     class Arguments:
-        customers = graphene.List(
-            graphene.NonNull(
-                graphene.InputObjectType(
-                    "CustomerInput",
-                    name=graphene.String(required=True),
-                    email=graphene.String(required=True),
-                    phone=graphene.String()
-                )
-            )
-        )
+        customers = graphene.NonNull(graphene.List(graphene.NonNull(CustomerInput)))
 
     customers = graphene.List(CustomerType)
     errors = graphene.List(graphene.String)
 
-    @transaction.atomic
     def mutate(self, info, customers):
         created = []
         errors = []
+
         for c in customers:
             try:
-                if Customer.objects.filter(email=c["email"]).exists():
-                    raise ValidationError(f"Duplicate email: {c['email']}")
-                customer = Customer.objects.create(**c)
+                customer = Customer.objects.create(
+                    name=c.name,
+                    email=c.email,
+                    phone=c.phone,
+                )
                 created.append(customer)
             except Exception as e:
                 errors.append(str(e))
+
         return BulkCreateCustomers(customers=created, errors=errors)
 
+
+# ✅ Add to your root schema
+class Mutation(graphene.ObjectType):
+    bulk_create_customers = BulkCreateCustomers.Field()
+
+
+schema = graphene.Schema(mutation=Mutation)
+
+                
 
 # 💰 Create Product Mutation
 class CreateProduct(graphene.Mutation):
