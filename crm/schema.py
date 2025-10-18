@@ -6,6 +6,10 @@ from .models import Customer , Product, Order # ✅ make sure Customer model exi
 from django.db import transaction
 from django.utils import timezone
 from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+from .models import Customer, Product, Order
+from .types import CustomerType, ProductType, OrderType
+from .filters import CustomerFilter, ProductFilter, OrderFilter
 
 
 # Define how the Customer model is exposed to GraphQL
@@ -221,3 +225,42 @@ class Query(graphene.ObjectType):
   # This is just a temporary placeholder for your CRM mutations
 class CRMMutation(graphene.ObjectType):
     pass  
+
+class CRMQuery(graphene.ObjectType):
+    all_customers = DjangoFilterConnectionField(
+        CustomerType,
+        filterset_class=CustomerFilter,
+        order_by=graphene.String(required=False)
+    )
+    all_products = DjangoFilterConnectionField(
+        ProductType,
+        filterset_class=ProductFilter,
+        order_by=graphene.String(required=False)
+    )
+    all_orders = DjangoFilterConnectionField(
+        OrderType,
+        filterset_class=OrderFilter,
+        order_by=graphene.String(required=False)
+    )
+
+    # Optional ordering logic
+    def resolve_all_customers(root, info, **kwargs):
+        qs = Customer.objects.all()
+        order_by = kwargs.get("order_by")
+        if order_by:
+            qs = qs.order_by(order_by)
+        return qs
+
+    def resolve_all_products(root, info, **kwargs):
+        qs = Product.objects.all()
+        order_by = kwargs.get("order_by")
+        if order_by:
+            qs = qs.order_by(order_by)
+        return qs
+
+    def resolve_all_orders(root, info, **kwargs):
+        qs = Order.objects.all()
+        order_by = kwargs.get("order_by")
+        if order_by:
+            qs = qs.order_by(order_by)
+        return qs
