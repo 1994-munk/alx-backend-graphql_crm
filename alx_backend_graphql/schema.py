@@ -1,5 +1,5 @@
 # schema.py
-from crm.schema import Query as CRMQuery  # ✅ import Query from crm
+from crm.schema import Query as CRMQuery,CRMMutation  # ✅ import Query from crm
 import graphene  # Graphene is the library that handles GraphQL in Django
 from graphene_django import DjangoObjectType
 from crm.models import Customer, Product, Order
@@ -15,7 +15,7 @@ class Query(graphene.ObjectType):
 class Query(CRMQuery, graphene.ObjectType):
     pass
 
-class Mutation(graphene.ObjectType):
+class Mutation(CRMMutation, graphene.ObjectType):
     pass
 
     # Define what happens when someone queries the 'hello' field
